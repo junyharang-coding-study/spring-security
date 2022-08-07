@@ -1,12 +1,15 @@
 package com.junyharang.spring.security.config;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
@@ -26,10 +29,12 @@ import java.io.IOException;
  * @version 1.0.0
  */
 
-@Slf4j
+@Slf4j @RequiredArgsConstructor
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
+
+    private final UserDetailsService userDetailsService;
 
     /**
      * Spring Security 설정 Method
@@ -95,7 +100,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                         // Signin Page 이동 처리
                         response.sendRedirect("/signin");
                     } // onLogoutSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) 끝
-                }).deleteCookies("remember-me");
+                }).deleteCookies("remember-me")
 
+                .and()
+                .rememberMe()
+                .rememberMeParameter("remember")
+                .tokenValiditySeconds(3600)       // 1시간 설정
+                .userDetailsService(userDetailsService);
     } // configure(HttpSecurity http) 끝
 } // class 끝
