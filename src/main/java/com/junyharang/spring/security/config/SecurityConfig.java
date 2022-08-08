@@ -113,10 +113,17 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .userDetailsService(userDetailsService)
 
                 /* The same time Session Control strategy - 동시 세션 제어 전략 */
+
                 .and()
                 .sessionManagement()
                 .maximumSessions(1)                     // 최대 Session 허용 개수 1개
 //              .maxSessionsPreventsLogin(true);        // 현재 이용자 인증을 실패하도록 하는 전략
                 .maxSessionsPreventsLogin(false);       // 이전 이용자 Session을 만료 시키는 전략 - Default Value
+
+                /* Session 고정 보호 기능 활성화 */
+        http
+                .sessionManagement()
+                .sessionFixation().changeSessionId();   // 이용자가 인증에 성공하게 되면 해당 이용자에 Session은 그대로 두고, Session ID 값만 변경
+
     }
 }
