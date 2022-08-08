@@ -2,7 +2,6 @@ package com.junyharang.spring.security.config;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -83,6 +82,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     }   // onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException exception) 끝
                 }) // failureHandler(new AuthenticationFailureHandler() 끝
                 .permitAll()   // signin Page는 인증 받지 않은 이용자도 접속할 수 있게 permitAll 처리
+
+                /* Logout 기능 활성화 */
+
                 .and()
                 .logout()
                 .logoutUrl("/logout")
@@ -102,10 +104,19 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     } // onLogoutSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) 끝
                 }).deleteCookies("remember-me")
 
+                /* Remember Me 기능 활성 */
+
                 .and()
                 .rememberMe()
                 .rememberMeParameter("remember")
                 .tokenValiditySeconds(3600)       // 1시간 설정
-                .userDetailsService(userDetailsService);
-    } // configure(HttpSecurity http) 끝
-} // class 끝
+                .userDetailsService(userDetailsService)
+
+                /* The same time Session Control strategy - 동시 세션 제어 전략 */
+                .and()
+                .sessionManagement()
+                .maximumSessions(1)                     // 최대 Session 허용 개수 1개
+//              .maxSessionsPreventsLogin(true);        // 현재 이용자 인증을 실패하도록 하는 전략
+                .maxSessionsPreventsLogin(false);       // 이전 이용자 Session을 만료 시키는 전략 - Default Value
+    }
+}
