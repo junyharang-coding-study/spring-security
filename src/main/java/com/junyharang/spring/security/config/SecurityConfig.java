@@ -3,6 +3,7 @@ package com.junyharang.spring.security.config;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -10,10 +11,14 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
+import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
+import org.springframework.security.web.savedrequest.SavedRequest;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -22,11 +27,10 @@ import javax.servlet.http.HttpSession;
 import java.io.IOException;
 
 /**
- * Spring Security Config Class
- * <b>History: 2022.06.14 최초 작성</b>
+ * <b>Spring Security Config Class</b>
  *
  * @author 주니하랑
- * @version 1.0.0
+ * @version 1.1.0
  */
 
 @Slf4j @RequiredArgsConstructor
@@ -37,7 +41,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     private final UserDetailsService userDetailsService;
 
     /**
-     * 이용자 생성 및 권한 설정
+     * <b>이용자 생성 및 권한 설정</b>
      *
      * @param auth - 세부 인가 처리 기능 설정 API 제공 객체
      */
@@ -51,7 +55,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     }
 
     /**
-     * Spring Security 설정 Method
+     * <b>Spring Security 설정 Method</b>
      *
      * @param http - 세부 보안 기능 설정 API 제공 객체
      */
@@ -61,6 +65,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         http
                 /* 인가 처리 */
                 .authorizeRequests()                                                                                // Client가 http 방식으로 요청을 보내면
+                .antMatchers("/", "/signin").permitAll()                                                // root Page와 Login Page는 인증 없이 접근 가능.
                 .antMatchers("/user").hasRole("USER")                                                   // 요청 이용자가 /user URI에 대한 요청을 하였을 때, 해당 URI 권한 중 USER 권한으로 이용자가 접근하였는지 확인.
                 .antMatchers("/admin/pay").hasRole("ADMIN")                                             // 요청 이용자가 /admin/pay URI에 대한 요청을 하였을 때, 해당 URI 권한 중 ADMIN 권한으로 이용자가 접근하였는지 확인.
                 .antMatchers("/admin/**").access("hasRole('ADMIN') or hasRole('SYS')")          // 요청 이용자가 /admin 하위 URI에 대한 요청을 하였을 때, 해당 URI 권한 중 ADMIN과 SYS 권한으로 이용자가 접근하였는지 확인.
@@ -81,8 +86,20 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                         log.info("이용자가 인증이 성공하여 인증 성공 처리를 위한 Handler onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication)가 호출 되었습니다!");
                         log.info("인증 성공 이용자 정보 : " + authentication.getName());
 
-                        log.info("인증 성공 이용자를 root Page로 이동 시키겠습니다!");
-                        response.sendRedirect("/");
+                        log.info("인증 성공 이용자 요청 정보(가고자 했던 URI 위치 정보)를 저장하기 위해 HttpSessionRequestCache 객체를 생성하겠습니다.");
+                        HttpSessionRequestCache requestCache = new HttpSessionRequestCache();
+
+                        log.info("인증 성공 이용자 요청 정보를 Session 에서 꺼내 저장하겠습니다.");
+                        SavedRequest savedRequest = requestCache.getRequest(request, response);
+
+                        log.info("인증 성공 이용자 가고자 했던 URI 위치 정보를 저장하겠습니다.");
+                        String redirectUrl = savedRequest.getRedirectUrl();
+
+                        log.info("인증 성공 이용자를 요청한 URI로 이동 시키겠습니다!");
+                        response.sendRedirect(redirectUrl);
+
+//                        log.info("인증 성공 이용자를 root Page로 이동 시키겠습니다!");
+//                        response.sendRedirect("/");
 
                     } // onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) 끝
                 }) // successHandler(new AuthenticationSuccessHandler() 끝
@@ -142,7 +159,25 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 /* Session 고정 보호 기능 활성화 */
         http
                 .sessionManagement()
-                .sessionFixation().changeSessionId();   // 이용자가 인증에 성공하게 되면 해당 이용자에 Session은 그대로 두고, Session ID 값만 변경
+                .sessionFixation().changeSessionId()   // 이용자가 인증에 성공하게 되면 해당 이용자에 Session은 그대로 두고, Session ID 값만 변경
 
+                /* 인증 / 인가 예외 처리 */
+        .and()
+                .exceptionHandling()
+                .authenticationEntryPoint(new AuthenticationEntryPoint() {
+                    @Override
+                    public void commence(HttpServletRequest request, HttpServletResponse response, AuthenticationException authException) throws IOException, ServletException {
+                        log.info("인증 예외가 발생하였습니다! /signin URI로 이동 시키겠습니다!");
+                        response.sendRedirect("/login");            // 인증 예외가 발생하면 Spring Security가 제공하는 Login Page로 이동
+//                        response.sendRedirect("/signin");           // 인증 예외가 발생하면 주니하랑이 만든 Login Page로 이동 시키는 작업
+                    }
+                })
+                .accessDeniedHandler(new AccessDeniedHandler() {
+                    @Override
+                    public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException accessDeniedException) throws IOException, ServletException {
+                        log.info("인가 예외가 발생하였습니다! /denied URI로 이동 시키겠습니다!");
+                        response.sendRedirect("/denied");          // 인가 예외가 발생하면 401 Error Page를 볼 수 있는 Page로 이동
+                    }
+                });
     }
 }

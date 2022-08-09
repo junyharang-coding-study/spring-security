@@ -10,17 +10,24 @@ import org.springframework.web.bind.annotation.RestController;
 import java.security.Principal;
 import java.util.Collection;
 
+/**
+ * <b>Spring Security Test Controller</b>
+ *
+ * @author 주니하랑
+ * @version 1.1.0
+ */
+
 @RestController
 public class SecurityController {
 
     @GetMapping("/")
-    public String index(Principal principal) {
-        return "Hello, JunyHarang 👋 This is JunyHarang's Home <br><br> 요청 이용자 ID 정보 : " + principal.getName() + " <br> 요청 이용자 권한 정보 : " + getRoleInfo();
+    public String index() {
+        return "Hello, JunyHarang 👋 <br><br> This is JunyHarang's Home <br><br> 요청 이용자 권한 정보 : " + getRoleInfo();
     } // String index() 끝
 
     @GetMapping("/signin")
     public String signIn() {
-        return "이 곳은 Login Page 입니다!";
+        return "이 곳은 Login Page 입니다! <br><br> 요청 이용자 권한 정보 : " + getRoleInfo();
     } // signIn() 끝
 
     @GetMapping("/user")
@@ -43,8 +50,13 @@ public class SecurityController {
         return "This is JunyHarang's admin Management Page <br><br> 요청 이용자 ID 정보 : " + principal.getName() + " <br> 요청 이용자 권한 정보 : " + getRoleInfo();
     } // adminManagement() 끝
 
+    @GetMapping("/denied")
+    public String deniedErrorPage(Principal principal) {
+        return "401 Unauthorized 귀하에 권한으로 접근할 수 없는 Page 입니다. <br><br> 요청 이용자 ID 정보 : " + principal.getName() + " <br> 요청 이용자 권한 정보 : " + getRoleInfo();
+    } // deniedErrorPage(Principal principal) 끝
+
     /**
-     * 이용자 권한 반환 Method
+     * <b>이용자 권한 반환 Method</b>
      *
      * @return Collection<? extends GrantedAuthority> - 요청 이용자 보유 권한 목록
      */
