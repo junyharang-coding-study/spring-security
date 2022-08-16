@@ -7,6 +7,7 @@ import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 /**
  * <b>Spring Security Config Class</b>
@@ -43,5 +44,8 @@ public class SecurityMultiConfig extends WebSecurityConfigurerAdapter {
                 .anyRequest().permitAll()
         .and()
                 .formLogin();
+
+        /* 부모, 자식 Thread 간 ThreadLocal 공유를 위한 설정 */
+        SecurityContextHolder.setStrategyName(SecurityContextHolder.MODE_INHERITABLETHREADLOCAL);
     }
 }
