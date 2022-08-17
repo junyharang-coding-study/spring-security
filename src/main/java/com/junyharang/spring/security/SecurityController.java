@@ -69,7 +69,7 @@ public class SecurityController {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                // SecurityContextHolder안 SecurityContext에 저장되어 있는 인증 객체를 불러옴.
+                // SecurityContextHolder 안 SecurityContext에 저장되어 있는 인증 객체를 불러옴.
                 Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             }
         }).start();
