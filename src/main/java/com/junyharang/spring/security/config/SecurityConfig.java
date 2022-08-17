@@ -27,7 +27,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     /**
      * <b>이용자 생성 및 권한 설정</b>
      *
-     * @param auth - 세부 인가 처리 기능 설정 API 제공 객체
+     * @param auth 세부 인가 처리 기능 설정 API 제공 객체
      */
 
     @Override
@@ -41,7 +41,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     /**
      * <b>Spring Security 설정 Method</b>
      *
-     * @param http - 세부 보안 기능 설정 API 제공 객체
+     * @param http 세부 보안 기능 설정 API 제공 객체
      */
 
     @Override
@@ -49,6 +49,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         http
                 .authorizeRequests()
                 .antMatchers("/user").hasRole("USER")
+                .antMatchers("/admin/pay").hasRole("ADMIN")
                 .anyRequest().permitAll()
                 .and()
                 .formLogin();
